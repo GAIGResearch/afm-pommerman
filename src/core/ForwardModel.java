@@ -1173,6 +1173,17 @@ public class ForwardModel {
      *                  May be -1, which means all object should be included in the copy (no reducing)
      */
     private void reduce(ForwardModel copy, int playerIdx) {
+        copy.updateFlames = updateFlames;
+        copy.updateBombs = updateBombs;
+        copy.updatePositionSwap = updatePositionSwap;
+        copy.updatePositionOverlap = updatePositionOverlap;
+        copy.updateMovingBombs = updateMovingBombs;
+        copy.lateUpdate = lateUpdate;
+        copy.updatePowerUps = updatePowerUps;
+        copy.updateCollapse = updateCollapse;
+        copy.alwaysUpdateTrueModel = alwaysUpdateTrueModel;
+        copy.threshold = threshold;
+
         Vector2d avatarPosition = null;
         int range = -1;
 
