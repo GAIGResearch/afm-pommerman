@@ -33,7 +33,7 @@ public class Run {
 
         //default
         if(args.length == 0)
-            args = new String[]{"0", "1", "1", "-1", "2", "3", "4", "5"};
+            args = new String[]{"0", "1", "10", "-1", "3", "5", "3", "5"};
 
         if(args.length != 8) {
             printHelp();
@@ -113,11 +113,6 @@ public class Run {
                         break;
                     case 5:
                         MCTSParams mctsParams = new MCTSParams();
-                        mctsParams.stop_type = mctsParams.STOP_ITERATIONS;
-                        mctsParams.num_iterations = 200;
-                        mctsParams.rollout_depth = 12;
-
-                        mctsParams.heuristic_method = mctsParams.CUSTOM_HEURISTIC;
                         p = new MCTSPlayer(seed, playerID++, mctsParams);
                         playerStr[i-4] = "MCTS";
                         break;

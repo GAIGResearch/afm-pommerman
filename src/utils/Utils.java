@@ -297,12 +297,7 @@ public class Utils
                                          Vector2d refPosition, int range) {
         for (GameObject g: originalList) {
 
-            Vector2d posG = null;
-            if (range >= 0)
-            {
-                // Get object's position.
-                posG = g.getPosition();
-            }
+            Vector2d posG = g.getPosition();
 
             // Check if the object is in range. If it is, add a copy of the object to the copy list.
             if (range == -1 || posG != null && refPosition != null && refPosition.custom_dist(posG) <= range) {

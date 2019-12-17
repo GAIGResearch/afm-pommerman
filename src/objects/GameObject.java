@@ -150,6 +150,8 @@ public class GameObject {
             copy.position = position.copy();
         }
 
+        copy.distance = distance;
+
         return copy;
     }
 
