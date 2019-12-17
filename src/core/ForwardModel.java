@@ -297,6 +297,30 @@ public class ForwardModel {
             if (!setDesiredCoordinate(b, b.getDesiredCoordinate(), board))
                 ((Bomb)b).setVelocity(new Vector2d());
         }
+        
+        //4.5 Add new bombs to the map in random locations.
+        Random random = Types.getRandom();
+        boolean bombSpawn = random.nextFloat() <= Types.BOMB_PROB;
+        
+        if(bombSpawn){
+        	
+        	int totalBombs = random.nextInt(Types.MAX_RANDOM_BOMBS+1);
+        	int bombsAdded = 0;
+        	
+        	do{
+        		int positionX = random.nextInt(board[0].length);
+				int positionY = random.nextInt(board[1].length);
+        		//Cell is empty?
+        		if(board[positionX][positionY] == TILETYPE.PASSAGE) {
+        			//Random bombstrength (within range)
+        			int bombStrength = Types.BLASTSTRENGTH_MIN + (random.nextInt(Types.BLASHSTRENGTH_MAX-Types.BLASTSTRENGTH_MIN));
+                    //Add bomb to map
+        			addBomb(positionX, positionY, bombStrength, BOMB_LIFE, Types.RANDOM_BOMB_ID, true);
+                    bombsAdded++;
+        		}
+        	}while(bombsAdded < totalBombs);
+        }
+        
 
         // 5. Position swap:
         //      agent <-> agent. Bounce back both.
