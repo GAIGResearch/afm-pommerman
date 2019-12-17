@@ -51,7 +51,6 @@ public class Test {
         assert players.size() == Types.NUM_PLAYERS : "There should be " + Types.NUM_PLAYERS +
                 " added to the game, but there are " + players.size();
 
-
         //Assign players and run the game.
         game.setPlayers(players);
 

@@ -368,6 +368,14 @@ public class GameState {
         model.setFlame(x, y, life);
     }
 
+    public void setRules(boolean uF, boolean uB, boolean uPS, boolean uPO, boolean uMB, boolean lU, boolean uPU, boolean uC) {
+        model.setRules(uF, uB, uPS, uPO, uMB, lU, uPU, uC);
+    }
+
+    public void setThreshold(int threshold) {
+        model.setThreshold(threshold);
+    }
+
     public int[] getMessage(){
         return getMessage(playerIdx);
     }

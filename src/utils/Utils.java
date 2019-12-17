@@ -203,27 +203,32 @@ public class Utils
      * @param board - board to update positions on
      */
     public static void checkPositionSwap(ArrayList<GameObject> golist1, ArrayList<GameObject> golist2,
-                                         Types.TILETYPE[][] board, boolean revertOnlySecond, boolean verbose) {
+                                         Types.TILETYPE[][] board, boolean revertOnlySecond, int threshold,
+                                         boolean verbose) {
         for (GameObject g1: golist1) {
-            for (GameObject g2: golist2) {
-                if (!g1.equals(g2)) {
-                    if (g1.getDesiredCoordinate() != null && g1.getPosition() != null &&
-                            g2.getDesiredCoordinate() != null && g2.getPosition() != null &&
-                            !g1.getDesiredCoordinate().equals(g1.getPosition()) &&
-                            !g2.getDesiredCoordinate().equals(g2.getPosition())) {
-                        // The objects need to both have moved to count for a swap check.
-                        if (g1.getDesiredCoordinate().equals(g2.getPosition()) &&
-                                g2.getDesiredCoordinate().equals(g1.getPosition())) {
-                            if (!revertOnlySecond) {
-                                if (verbose) {
-                                    System.out.println("Reverting " + g1.getType() + " swap with " + g2.getType());
+            if (!(g1 instanceof Bomb) || threshold == -1 || g1.getDistance() < threshold) {
+                for (GameObject g2 : golist2) {
+                    if (!(g2 instanceof Bomb) || threshold == -1 || g2.getDistance() < threshold) {
+                        if (!g1.equals(g2)) {
+                            if (g1.getDesiredCoordinate() != null && g1.getPosition() != null &&
+                                    g2.getDesiredCoordinate() != null && g2.getPosition() != null &&
+                                    !g1.getDesiredCoordinate().equals(g1.getPosition()) &&
+                                    !g2.getDesiredCoordinate().equals(g2.getPosition())) {
+                                // The objects need to both have moved to count for a swap check.
+                                if (g1.getDesiredCoordinate().equals(g2.getPosition()) &&
+                                        g2.getDesiredCoordinate().equals(g1.getPosition())) {
+                                    if (!revertOnlySecond) {
+                                        if (verbose) {
+                                            System.out.println("Reverting " + g1.getType() + " swap with " + g2.getType());
+                                        }
+                                        setDesiredCoordinate(g1, g1.getPosition(), board);
+                                    }
+                                    if (verbose) {
+                                        System.out.println("Reverting " + g2.getType() + " swap with " + g1.getType());
+                                    }
+                                    setDesiredCoordinate(g2, g2.getPosition(), board);
                                 }
-                                setDesiredCoordinate(g1, g1.getPosition(), board);
                             }
-                            if (verbose) {
-                                System.out.println("Reverting " + g2.getType() + " swap with " + g1.getType());
-                            }
-                            setDesiredCoordinate(g2, g2.getPosition(), board);
                         }
                     }
                 }
@@ -235,17 +240,20 @@ public class Utils
      * Checks if more than 1 object wants to move to the same position. Bounce all back.
      * @param golist - list of game objects to check.
      */
-    public static void checkPositionOverlap(ArrayList<GameObject> golist, Types.TILETYPE[][] board, boolean verbose) {
+    public static void checkPositionOverlap(ArrayList<GameObject> golist, Types.TILETYPE[][] board, boolean verbose,
+                                            int threshold) {
         // Count how many objects are in the same position.
         HashMap<Vector2d, Integer> countList = checkOccupancy(golist);
 
         // If more than 1 object are at a position, revert all to previous position.
         for (GameObject g: golist) {
-            if (countList.get(g.getDesiredCoordinate()) > 1) {
-                if (verbose) {
-                    System.out.println("Reverting " + g.getType() + " overlap");
+            if (!(g instanceof Bomb) || threshold == -1 || g.getDistance() < threshold) {
+                if (countList.get(g.getDesiredCoordinate()) > 1) {
+                    if (verbose) {
+                        System.out.println("Reverting " + g.getType() + " overlap");
+                    }
+                    setDesiredCoordinate(g, g.getPosition(), board);
                 }
-                setDesiredCoordinate(g, g.getPosition(), board);
             }
         }
     }

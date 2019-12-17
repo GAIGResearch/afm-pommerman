@@ -54,6 +54,22 @@ public class ForwardModel {
     private EventsStatistics es;
     private boolean[] isAgentStuck;
 
+    // Game rule flags
+    private boolean updateFlames = true;
+    private boolean updateBombs = true;
+    private boolean updatePositionSwap = true;
+    private boolean updatePositionOverlap = true;
+    private boolean updateMovingBombs = true;
+    private boolean lateUpdate = true;
+    private boolean updatePowerUps = true;
+    private boolean updateCollapse = true;
+    private boolean alwaysUpdateTrueModel = true;
+
+    // Rule update threshold
+    private int threshold = -1;
+
+
+
     /**
      * Creates a forward model object.
      * @param size Size of the board.
@@ -281,105 +297,134 @@ public class ForwardModel {
 
         // 2. Tick the flames
         ArrayList<GameObject> deadFlames = new ArrayList<>();
-        for (GameObject f : flames) {
-            f.tick();
-            if (f.getLife() == 0) {  // Flame is dead, remove it from the list
-                deadFlames.add(f);
+        if (updateFlames || trueModel && alwaysUpdateTrueModel) {
+            for (GameObject f : flames) {
+                if (threshold == -1 || f.getDistance() < threshold) {
+                    f.tick();
+                    if (f.getLife() == 0) {  // Flame is dead, remove it from the list
+                        deadFlames.add(f);
+                    }
+                }
             }
         }
 
         // 3. Agents already have desired positions set from GameState call according to their chosen actions
         // 4. Tick bombs, they set their desired position in the tick() method as well as their life. They also
-        for (GameObject b : bombs) {
-            b.tick();
+        if (updateBombs || trueModel && alwaysUpdateTrueModel) {
+            for (GameObject b : bombs) {
+                if (threshold == -1 || b.getDistance() < threshold) {
+                    b.tick();
 
-            // Wrap around board size, don't let bombs outside of game area, check collisions with walls.
-            if (!setDesiredCoordinate(b, b.getDesiredCoordinate(), board))
-                ((Bomb)b).setVelocity(new Vector2d());
+                    // Wrap around board size, don't let bombs outside of game area, check collisions with walls.
+                    if (!setDesiredCoordinate(b, b.getDesiredCoordinate(), board))
+                        ((Bomb) b).setVelocity(new Vector2d());
+                }
+            }
         }
 
         // 5. Position swap:
         //      agent <-> agent. Bounce back both.
         //      bomb <-> bomb. Bounce back both.
         //      bomb <-> agent. Bomb only bounce back.
-        checkPositionSwap(aliveAgents, aliveAgents, board, false, VERBOSE_FM_DEBUG && trueModel);
-        checkPositionSwap(bombs, bombs, board, false, VERBOSE_FM_DEBUG && trueModel);
-        checkPositionSwap(aliveAgents, bombs, board, true, VERBOSE_FM_DEBUG && trueModel);
+        if (updatePositionSwap || trueModel && alwaysUpdateTrueModel) {
+            checkPositionSwap(aliveAgents, aliveAgents, board, false, threshold, VERBOSE_FM_DEBUG && trueModel);
+            checkPositionSwap(bombs, bombs, board, false,  threshold,VERBOSE_FM_DEBUG && trueModel);
+            checkPositionSwap(aliveAgents, bombs, board, true,  threshold,VERBOSE_FM_DEBUG && trueModel);
+        }
 
         // 6. If >= 2 agents or >= 2 bombs on same space, bounce both back.
-        checkPositionOverlap(aliveAgents, board, VERBOSE_FM_DEBUG && trueModel);
-        checkPositionOverlap(bombs, board, VERBOSE_FM_DEBUG && trueModel);
+        if (updatePositionOverlap || trueModel && alwaysUpdateTrueModel) {
+            checkPositionOverlap(aliveAgents, board, VERBOSE_FM_DEBUG && trueModel, threshold);
+            checkPositionOverlap(bombs, board, VERBOSE_FM_DEBUG && trueModel, threshold);
+        }
 
         // 7. Handle kicks & moving bombs hitting agents that can not kick
-        handleMovingBombs();
+        if (updateMovingBombs || trueModel && alwaysUpdateTrueModel) {
+            handleMovingBombs();
+        }
 
         // 8. Late update bomb overlaps. In previous loop it's possible that some bombs ended up overlapping.
-        checkPositionOverlap(bombs, board, VERBOSE_FM_DEBUG && trueModel);
+        if (lateUpdate || trueModel && alwaysUpdateTrueModel) {
+            checkPositionOverlap(bombs, board, VERBOSE_FM_DEBUG && trueModel, threshold);
 
-        // If bombs were bounced back, then they may overlap players again, bounce players back too if players moved.
-        for (GameObject b: bombs) {
-            for (GameObject p : agents) {
-                if(p.getDesiredCoordinate() != null && p.getPosition() != null) {
-                    if (!p.getDesiredCoordinate().equals(p.getPosition()) &&
-                            p.getDesiredCoordinate().equals(b.getDesiredCoordinate())) {
-                        // Bounce agent back
-                        if (VERBOSE_FM_DEBUG && trueModel) {
-                            System.out.println("Reverting " + p.getType() + " overlap bomb late update.");
+            // If bombs were bounced back, then they may overlap players again, bounce players back too if players moved.
+            for (GameObject b : bombs) {
+                if (threshold == -1 || b.getDistance() < threshold) {
+                    for (GameObject p : agents) {
+                        if (p.getDesiredCoordinate() != null && p.getPosition() != null) {
+                            if (!p.getDesiredCoordinate().equals(p.getPosition()) &&
+                                    p.getDesiredCoordinate().equals(b.getDesiredCoordinate())) {
+                                // Bounce agent back
+                                if (VERBOSE_FM_DEBUG && trueModel) {
+                                    System.out.println("Reverting " + p.getType() + " overlap bomb late update.");
+                                }
+                                setDesiredCoordinate(p, p.getPosition(), board);
+                            }
                         }
-                        setDesiredCoordinate(p, p.getPosition(), board);
                     }
+                    // Update bomb positions to their desired positions
+                    move(b);
                 }
             }
-            // Update bomb positions to their desired positions
-            move(b);
         }
 
         // 9. Players pick up power-ups
-        for (GameObject p: aliveAgents) {
-            if(p.getDesiredCoordinate() != null) {
-                int x = p.getDesiredCoordinate().x;
-                int y = p.getDesiredCoordinate().y;
-                pickPowerUp((Avatar) p, x, y);
+        if (updatePowerUps || trueModel && alwaysUpdateTrueModel) {
+            for (GameObject p : aliveAgents) {
+                if (p.getDesiredCoordinate() != null) {
+                    int x = p.getDesiredCoordinate().x;
+                    int y = p.getDesiredCoordinate().y;
+                    pickPowerUp((Avatar) p, x, y);
+                }
             }
         }
 
         // 10. Explode bombs
-        HashMap<Vector2d, Integer> flameOccupancy = handleBombExplosions();
+        HashMap<Vector2d, Integer> flameOccupancy = new HashMap<>();
+        if (updateBombs || trueModel && alwaysUpdateTrueModel) { // TODO: different?
+            flameOccupancy = handleBombExplosions();
+        }
 
         // 11. Resolve flame on death effects
-        for (GameObject f : deadFlames) {
-            if (f.getPosition() != null) {  // Flame had a physical presence, resolve on death effects
-                int x = f.getPosition().x;
-                int y = f.getPosition().y;
+        if (updateFlames || trueModel && alwaysUpdateTrueModel) { // TODO: different?
+            for (GameObject f : deadFlames) {
+                if (f.getPosition() != null) {  // Flame had a physical presence, resolve on death effects
+                    int x = f.getPosition().x;
+                    int y = f.getPosition().y;
 
-                // If there is a power-up at that position, add it to the board
-                if (powerups[y][x] != null) {
-                    board[y][x] = powerups[y][x];
-                    powerups[y][x] = null;
-                    // If no power-up, add a passage to the board
-                } else {
-                    board[y][x] = Types.TILETYPE.PASSAGE;
+                    // If there is a power-up at that position, add it to the board
+                    if (powerups[y][x] != null) {
+                        board[y][x] = powerups[y][x];
+                        powerups[y][x] = null;
+                        // If no power-up, add a passage to the board
+                    } else {
+                        board[y][x] = Types.TILETYPE.PASSAGE;
+                    }
                 }
             }
+            flames.removeAll(deadFlames);
         }
-        flames.removeAll(deadFlames);
 
         // 12. Add flames left alive back into the board if missing. Multiple flames may share a position, and the board
         // Should contain a flame until all flames are dead.
-        for (GameObject f : flames) {
-            int x = f.getDesiredCoordinate().x;
-            int y = f.getDesiredCoordinate().y;
-            if (board[y][x] != Types.TILETYPE.FLAMES) {
-                f.setPosition(f.getDesiredCoordinate());
-                board[y][x] = f.getType();
+        ArrayList<GameObject> deadAgentsThisTick = new ArrayList<>();
+
+        if (updateFlames || trueModel && alwaysUpdateTrueModel) {
+            for (GameObject f : flames) {
+                int x = f.getDesiredCoordinate().x;
+                int y = f.getDesiredCoordinate().y;
+                if (board[y][x] != Types.TILETYPE.FLAMES) {
+                    f.setPosition(f.getDesiredCoordinate());
+                    board[y][x] = f.getType();
+                }
             }
         }
 
         // 13. Kill agents on flames. Otherwise, update position on board.
-        ArrayList<GameObject> deadAgentsThisTick = handleAgentKilling(flameOccupancy);
+        deadAgentsThisTick = handleAgentKilling(flameOccupancy);
 
         // 14. Check for terminated agents
-        if(deadAgentsThisTick.size() > 0) {
+        if (deadAgentsThisTick.size() > 0) {
             Types.getGameConfig().processDeadAgents(agents, aliveAgents, deadAgentsThisTick, game_mode);
         }
 
@@ -387,7 +432,7 @@ public class ForwardModel {
         bombBlastStrength = new int[size][size];
         bombLife = new int[size][size];
 
-        for(GameObject bombObject : bombs){
+        for (GameObject bombObject : bombs) {
             Bomb bomb = (Bomb) bombObject;
             Vector2d position = bomb.getPosition();
             bombBlastStrength[position.y][position.x] = bomb.getBlastStrength();
@@ -395,7 +440,7 @@ public class ForwardModel {
         }
 
         // 16. Collapse
-        if(Types.COLLAPSE_BOARD) {
+        if(Types.COLLAPSE_BOARD && (updateCollapse || trueModel && alwaysUpdateTrueModel)) {
             if (gsTick >= COLLAPSE_START && (gsTick - COLLAPSE_START) % COLLAPSE_STEP == 0) {
 
                 int collapse_stage = (gsTick - COLLAPSE_START) / COLLAPSE_STEP; // 0, 1, 2, ...
@@ -480,58 +525,59 @@ public class ForwardModel {
     private void handleMovingBombs()
     {
         for (GameObject b: bombs) {
-            for (GameObject p: aliveAgents) {
+            if (threshold == -1 || b.getDistance() < threshold) {
+                for (GameObject p : aliveAgents) {
 
-                if(p.getDesiredCoordinate() != null && p.getPosition() != null){
+                    if (p.getDesiredCoordinate() != null && p.getPosition() != null) {
 
 
-                    if (b.getDesiredCoordinate().equals(b.getPosition())) {
-                        ((Bomb) b).setVelocity(new Vector2d());
-                    }
-                    if (p.getDesiredCoordinate().equals(b.getDesiredCoordinate())) {
-                        // Agent tried to move onto bomb OR bomb tried to move onto agent, check if agent can kick
-                        if (((Avatar) p).canKick()) {
-                            // Player can kick, so set bomb velocity
-                            Vector2d velocity = p.getDesiredCoordinate().subtract(p.getPosition());
-                            ((Bomb) b).setVelocity(velocity);
+                        if (b.getDesiredCoordinate().equals(b.getPosition())) {
+                            ((Bomb) b).setVelocity(new Vector2d());
+                        }
+                        if (p.getDesiredCoordinate().equals(b.getDesiredCoordinate())) {
+                            // Agent tried to move onto bomb OR bomb tried to move onto agent, check if agent can kick
+                            if (((Avatar) p).canKick()) {
+                                // Player can kick, so set bomb velocity
+                                Vector2d velocity = p.getDesiredCoordinate().subtract(p.getPosition());
+                                ((Bomb) b).setVelocity(velocity);
 
-                            // First bomb move on the same tick as the kick happened. Do not move into players or walls.
-                            // If bomb couldn't move, reset its velocity
-                            ArrayList<Types.TILETYPE> collisions = new ArrayList<>();
-                            collisions.add(Types.TILETYPE.RIGID);
-                            collisions.add(Types.TILETYPE.WOOD);
-                            collisions.addAll(Types.TILETYPE.getAgentTypes());
+                                // First bomb move on the same tick as the kick happened. Do not move into players or walls.
+                                // If bomb couldn't move, reset its velocity
+                                ArrayList<Types.TILETYPE> collisions = new ArrayList<>();
+                                collisions.add(Types.TILETYPE.RIGID);
+                                collisions.add(Types.TILETYPE.WOOD);
+                                collisions.addAll(Types.TILETYPE.getAgentTypes());
 
-                            if (velocity.mag() == 0) {
-                                // They can be on same position only if agent just dropped bomb
-                                // Move agent back if they moved & the bomb didn't move when the kick was attempted
+                                if (velocity.mag() == 0) {
+                                    // They can be on same position only if agent just dropped bomb
+                                    // Move agent back if they moved & the bomb didn't move when the kick was attempted
+                                    if (!p.getDesiredCoordinate().equals(p.getPosition())) {
+                                        if (VERBOSE_FM_DEBUG && trueModel) {
+                                            System.out.println("Reverting " + p.getType() + " bomb overlap " + b.getDesiredCoordinate());
+                                        }
+                                        setDesiredCoordinate(p, p.getPosition(), board);
+                                    }
+                                } else {
+                                    if (!setDesiredCoordinate(b, b.getDesiredCoordinate().add(velocity), board, collisions)) {
+                                        ((Bomb) b).setVelocity(new Vector2d());
+                                    }
+                                }
+                            } else {
+                                // Move both back
                                 if (!p.getDesiredCoordinate().equals(p.getPosition())) {
                                     if (VERBOSE_FM_DEBUG && trueModel) {
-                                        System.out.println("Reverting " + p.getType() + " bomb overlap " + b.getDesiredCoordinate());
+                                        System.out.println("Reverting " + p.getType() +
+                                                " trying to overlap bomb, bomb revert too: " + p.getDesiredCoordinate() + " <> " +
+                                                b.getDesiredCoordinate());
                                     }
                                     setDesiredCoordinate(p, p.getPosition(), board);
                                 }
-                            } else {
-                                if (!setDesiredCoordinate(b, b.getDesiredCoordinate().add(velocity), board, collisions)) {
-                                    ((Bomb) b).setVelocity(new Vector2d());
+                                if (!b.getDesiredCoordinate().equals(b.getPosition())) {
+                                    setDesiredCoordinate(b, b.getPosition(), board);
                                 }
-                            }
-                        } else {
-                            // Move both back
-                            if (!p.getDesiredCoordinate().equals(p.getPosition())) {
-                                if (VERBOSE_FM_DEBUG && trueModel) {
-                                    System.out.println("Reverting " + p.getType() +
-                                            " trying to overlap bomb, bomb revert too: " + p.getDesiredCoordinate() + " <> " +
-                                            b.getDesiredCoordinate());
-                                }
-                                setDesiredCoordinate(p, p.getPosition(), board);
-                            }
-                            if (!b.getDesiredCoordinate().equals(b.getPosition())) {
-                                setDesiredCoordinate(b, b.getPosition(), board);
                             }
                         }
                     }
-
                 }
             }
         }
@@ -554,58 +600,59 @@ public class ForwardModel {
 
             ArrayList<GameObject> deadBombs = new ArrayList<>();
             for (GameObject b : bombs) {
+                if (threshold == -1 || b.getDistance() < threshold) {
 
-                // Force this bomb to explode if there is a flame at this position.
-                boolean forceExplosion = false;
-                if (flameOccupancy.get(b.getPosition()) != null) forceExplosion = true;
+                    // Force this bomb to explode if there is a flame at this position.
+                    boolean forceExplosion = false;
+                    if (flameOccupancy.get(b.getPosition()) != null) forceExplosion = true;
 
-                // Find the flame owners who triggered the explosion
-                if(trueModel && LOGGING_STATISTICS) {
-                    if (forceExplosion) {
-                        StringBuilder eventSB = new StringBuilder();
-                        eventSB.append(tick + " | [" + ((Bomb) b).getPlayerIdx() + "]'s bomb exploded at ("
-                                + b.getPosition().x + ", " + b.getPosition().y + ") triggered by ");
-                        Set<Integer> killerIDs = new HashSet<>();
-                        for (GameObject flame : this.flames) {
-                            if (flame.getPosition().equals(b.getPosition()))
-                                killerIDs.add(((Flame) flame).playerIdx);
+                    // Find the flame owners who triggered the explosion
+                    if (trueModel && LOGGING_STATISTICS) {
+                        if (forceExplosion) {
+                            StringBuilder eventSB = new StringBuilder();
+                            eventSB.append(tick + " | [" + ((Bomb) b).getPlayerIdx() + "]'s bomb exploded at ("
+                                    + b.getPosition().x + ", " + b.getPosition().y + ") triggered by ");
+                            Set<Integer> killerIDs = new HashSet<>();
+                            for (GameObject flame : this.flames) {
+                                if (flame.getPosition().equals(b.getPosition()))
+                                    killerIDs.add(((Flame) flame).playerIdx);
+                            }
+                            for (Integer id : killerIDs) {
+                                eventSB.append("[" + id + "]");
+                                es.bombsTriggered[id]++;
+                            }
+                            eventSB.append("\n");
+                            es.events.add(eventSB.toString());
+                        } else if (b.getLife() == 0) {
+                            String eventString = tick + " | [" + ((Bomb) b).getPlayerIdx() + "]'s bomb exploded at ("
+                                    + b.getPosition().x + ", " + b.getPosition().y + ")\n";
+                            es.events.add(eventString);
                         }
-                        for (Integer id : killerIDs) {
-                            eventSB.append("[" + id + "]");
-                            es.bombsTriggered[id]++;
+                    }
+
+                    // TODO: Wood removals happen here, but within Bomb class, what's the best way of doing this? (to count them)
+
+                    // This bomb will explode and create new flames if life reached 0, or forced to explode
+                    ArrayList<GameObject> newFlames = ((Bomb) b).explode(forceExplosion, board, powerups);
+                    if (newFlames != null && newFlames.size() > 0) {
+
+                        flames.addAll(newFlames);
+                        newExplosions = true;
+
+                        // Remove this bomb from the list of bombs
+                        deadBombs.add(b);
+
+                        // Give the player 1 ammo back for this bomb
+                        int pIdx = ((Bomb) b).getPlayerIdx();
+                        if (pIdx >= 0) {
+                            ((Avatar) agents[pIdx]).addAmmo();
                         }
-                        eventSB.append("\n");
-                        es.events.add(eventSB.toString());
-                    }
-                    else if(b.getLife() == 0){
-                        String eventString = tick + " | [" + ((Bomb) b).getPlayerIdx() + "]'s bomb exploded at ("
-                                + b.getPosition().x + ", " + b.getPosition().y + ")\n";
-                        es.events.add(eventString);
-                    }
-                }
 
-                // TODO: Wood removals happen here, but within Bomb class, what's the best way of doing this? (to count them)
-
-                // This bomb will explode and create new flames if life reached 0, or forced to explode
-                ArrayList<GameObject> newFlames = ((Bomb) b).explode(forceExplosion, board, powerups);
-                if (newFlames != null && newFlames.size() > 0) {
-
-                    flames.addAll(newFlames);
-                    newExplosions = true;
-
-                    // Remove this bomb from the list of bombs
-                    deadBombs.add(b);
-
-                    // Give the player 1 ammo back for this bomb
-                    int pIdx = ((Bomb) b).getPlayerIdx();
-                    if (pIdx >= 0) {
-                        ((Avatar)agents[pIdx]).addAmmo();
-                    }
-
-                    // Add new flame positions to the map
-                    HashMap<Vector2d, Integer> newOccupancy = checkOccupancy(newFlames);
-                    for (Map.Entry<Vector2d, Integer> e : newOccupancy.entrySet()) {
-                        flameOccupancy.merge(e.getKey(), e.getValue(), (a, b1) -> b1 + a);
+                        // Add new flame positions to the map
+                        HashMap<Vector2d, Integer> newOccupancy = checkOccupancy(newFlames);
+                        for (Map.Entry<Vector2d, Integer> e : newOccupancy.entrySet()) {
+                            flameOccupancy.merge(e.getKey(), e.getValue(), (a, b1) -> b1 + a);
+                        }
                     }
                 }
             }
@@ -1002,6 +1049,36 @@ public class ForwardModel {
         for (GameObject f : flame) {
             f.setLife(life);
         }
+    }
+
+    /**
+     * Sets flags for the forward model rules.
+     * @param uF - update flames
+     * @param uB - update bombs
+     * @param uPS - update position swap
+     * @param uPO - update position overlap
+     * @param uMB - update moving bombs
+     * @param lU - late update positions
+     * @param uPU - update powerups
+     * @param uC - update collapsing
+     */
+    void setRules(boolean uF, boolean uB, boolean uPS, boolean uPO, boolean uMB, boolean lU, boolean uPU, boolean uC) {
+        updateFlames = uF;
+        updateBombs = uB;
+        updatePositionSwap = uPS;
+        updatePositionOverlap = uPO;
+        updateMovingBombs = uMB;
+        lateUpdate = lU;
+        updatePowerUps = uPU;
+        updateCollapse = uC;
+    }
+
+    /**
+     * Sets threshold for object update, those beyond threshold are not updated, unless -1 (then all updated).
+     * @param threshold - int
+     */
+    void setThreshold (int threshold) {
+        this.threshold = threshold;
     }
 
     /**
