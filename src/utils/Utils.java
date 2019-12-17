@@ -290,19 +290,28 @@ public class Utils
         for (GameObject g: originalList) {
 
             Vector2d posG = null;
-            if (range >= 0) {
+            if (range >= 0)
+            {
                 // Get object's position.
                 posG = g.getPosition();
             }
 
             // Check if the object is in range. If it is, add a copy of the object to the copy list.
             if (range == -1 || posG != null && refPosition != null && refPosition.custom_dist(posG) <= range) {
+
+                int manhDistance = Math.abs(posG.x - refPosition.x) +  Math.abs(posG.y - refPosition.y);
+
                 GameObject ob = g.copy();
-                if (ob.getType() == Types.TILETYPE.FLAMES) ob.setLife(FLAME_LIFE);
+                if (ob.getType() == Types.TILETYPE.FLAMES)
+                {
+                    ob.setLife(FLAME_LIFE);
+                    ob.setDistance(manhDistance);
+                }
                 else if (ob.getType() == Types.TILETYPE.BOMB) {
                     Bomb b = (Bomb)ob;
                     b.setVelocity(new Vector2d());
                     b.setPlayerIdx(-1);
+                    b.setDistance(manhDistance);
                 }
                 copyList.add(ob);
             }

@@ -77,7 +77,7 @@ public class SingleTreeNode
 
         while(!stop){
 
-            GameState state = rootState.copy();
+            GameState state = rootState.copy(rootState.getPlayerId() - Types.TILETYPE.AGENT0.getKey());
             ElapsedCpuTimer elapsedTimerIteration = new ElapsedCpuTimer();
             SingleTreeNode selected = treePolicy(state);
             double delta = selected.rollOut(state);
