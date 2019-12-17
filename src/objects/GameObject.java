@@ -20,7 +20,7 @@ public class GameObject {
     int id;
 
 
-    private int distance;
+    int distance;
 
     private Image img;
 

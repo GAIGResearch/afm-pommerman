@@ -28,6 +28,7 @@ public class Flame extends GameObject {
         }
         copy.desiredCoordinate = desiredCoordinate.copy();
         copy.id = hashCode();
+        copy.distance = distance;
         return copy;
     }
 }

@@ -41,6 +41,7 @@ public class Bomb extends GameObject {
         copy.position = position.copy();
         copy.velocity = velocity.copy();
         copy.id = hashCode();
+        copy.distance = distance;
         return copy;
     }
 
