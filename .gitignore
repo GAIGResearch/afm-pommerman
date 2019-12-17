@@ -1,0 +1,7 @@
+
+out/production/afm-pommerman/utils/WindowInput.class
+*.class
+*.xml
+.DS_Store
+afm-pommerman.iml
+*.MF

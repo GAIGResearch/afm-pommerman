@@ -65,7 +65,7 @@ public class SingleTreeNode
     }
 
 
-    void mctsSearch(ElapsedCpuTimer elapsedTimer) {
+    int mctsSearch(ElapsedCpuTimer elapsedTimer) {
 
         double avgTimeTaken;
         double acumTimeTaken = 0;
@@ -99,7 +99,8 @@ public class SingleTreeNode
                 stop = (fmCallsCount + params.rollout_depth) > params.num_fmcalls;
             }
         }
-        //System.out.println(" ITERS " + numIters);
+//        System.out.println(" ITERS " + numIters);
+        return numIters;
     }
 
     private SingleTreeNode treePolicy(GameState state) {

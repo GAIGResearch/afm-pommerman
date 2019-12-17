@@ -4,6 +4,7 @@ import core.GameState;
 import players.optimisers.ParameterizedPlayer;
 import players.Player;
 import utils.ElapsedCpuTimer;
+import utils.StatSummary;
 import utils.Types;
 
 import java.util.ArrayList;
@@ -30,9 +31,14 @@ public class MCTSPlayer extends ParameterizedPlayer {
         this(seed, id, new MCTSParams());
     }
 
+    public StatSummary ss;
+
+
     public MCTSPlayer(long seed, int id, MCTSParams params) {
         super(seed, id, params);
         reset(seed, id);
+
+        ss = new StatSummary();
 
         ArrayList<Types.ACTIONS> actionsList = Types.ACTIONS.all();
         actions = new Types.ACTIONS[actionsList.size()];
@@ -73,7 +79,8 @@ public class MCTSPlayer extends ParameterizedPlayer {
         m_root.setRootGameState(gs);
 
         //Determine the action using MCTS...
-        m_root.mctsSearch(ect);
+        int numIters = m_root.mctsSearch(ect);
+        ss.add(numIters);
 
         //Determine the best action to take and return it.
         int action = m_root.mostVisitedAction();
@@ -95,5 +102,10 @@ public class MCTSPlayer extends ParameterizedPlayer {
     @Override
     public Player copy() {
         return new MCTSPlayer(seed, playerID, params);
+    }
+
+    public void result(double reward)
+    {
+        System.out.println(ss.mean());
     }
 }

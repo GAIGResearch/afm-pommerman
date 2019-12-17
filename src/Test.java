@@ -31,7 +31,7 @@ public class Test {
         int playerID = Types.TILETYPE.AGENT0.getKey();
 
         MCTSParams mctsParams = new MCTSParams();
-        mctsParams.stop_type = mctsParams.STOP_ITERATIONS;
+        mctsParams.stop_type = mctsParams.STOP_TIME;
         mctsParams.heuristic_method = mctsParams.CUSTOM_HEURISTIC;
 
         RHEAParams rheaParams = new RHEAParams();
@@ -40,11 +40,12 @@ public class Test {
         players.add(new MCTSPlayer(seed, playerID++, mctsParams));
         //players.add(new MCTSPlayer(seed, playerID++, mctsParams));
 
-//        players.add(new SimplePlayer(seed, playerID++));
-        players.add(new RHEAPlayer(seed, playerID++, rheaParams));
-//        players.add(new SimplePlayer(seed, playerID++));
-        players.add(new MCTSPlayer(seed, playerID++, new MCTSParams()));
-        players.add(new RHEAPlayer(seed, playerID++, rheaParams));
+        players.add(new SimplePlayer(seed, playerID++));
+//        players.add(new RHEAPlayer(seed, playerID++, rheaParams));
+        players.add(new SimplePlayer(seed, playerID++));
+        players.add(new SimplePlayer(seed, playerID++));
+//        players.add(new MCTSPlayer(seed, playerID++, new MCTSParams()));
+//        players.add(new RHEAPlayer(seed, playerID++, rheaParams));
 
         // Make sure we have exactly NUM_PLAYERS players
         assert players.size() == Types.NUM_PLAYERS : "There should be " + Types.NUM_PLAYERS +
