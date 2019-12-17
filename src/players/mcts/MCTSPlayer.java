@@ -87,6 +87,19 @@ public class MCTSPlayer extends ParameterizedPlayer {
 
         // TODO update message memory
 
+
+//        Types.TILETYPE[][] ttype = gs.getBoard();
+//        for(int i = 0; i < ttype.length; ++i)
+//        {
+//            for(int j = 0; j < ttype[0].length; ++j)
+//            {
+//                if(ttype[i][j] == Types.TILETYPE.BOMB)
+//                {
+//                    int ij = 0;
+//                }
+//            }
+//        }
+
         //... and return it.
         return actions[action];
     }

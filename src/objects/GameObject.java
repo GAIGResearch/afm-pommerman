@@ -19,6 +19,9 @@ public class GameObject {
     private utils.Types.TILETYPE type = Types.TILETYPE.PASSAGE;
     int id;
 
+
+    private int distance;
+
     private Image img;
 
 
@@ -182,5 +185,14 @@ public class GameObject {
         if (desiredCoordinate != null && go.desiredCoordinate != null && !desiredCoordinate.equals(go.desiredCoordinate))
             return false;
         return true;
+    }
+
+
+    public int getDistance() {
+        return distance;
+    }
+
+    public void setDistance(int distance) {
+        this.distance = distance;
     }
 }
