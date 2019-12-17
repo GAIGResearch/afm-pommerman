@@ -63,6 +63,8 @@ public class MCTSPlayer extends ParameterizedPlayer {
     @Override
     public Types.ACTIONS act(GameState gs) {
 
+        gs.setThreshold(this.params.dist_threshold);
+
         // TODO update gs
         if (gs.getGameMode().equals(Types.GAME_MODE.TEAM_RADIO)){
             int[] msg = gs.getMessage();
