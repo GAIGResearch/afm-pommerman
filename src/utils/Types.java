@@ -6,6 +6,7 @@ import core.gameConfig.OriginalGameConfig;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Random;
 
 public class Types {
 
@@ -16,6 +17,15 @@ public class Types {
     public static int DEFAULT_BOMB_BLAST = 2;       //Default bombs create flames with this range.
     public static int DEFAULT_BOMB_AMMO = 1;        //Default number of simultaneous bombs an agent can put.
     public static boolean DEFAULT_BOMB_KICK = false;//Can agents kick bomb by default?
+    public static int DEFAULT_VISION_RANGE = -1;    //-1 for full observability, >1 for PO.
+    
+    // Random bomb constants.
+    public static int MIN_RANDOM_BOMBS = 1;
+    public static int MAX_RANDOM_BOMBS = 5;
+    public static int RANDOM_BOMB_ID = -1;
+    public static int BLASTSTRENGTH_MIN = 1;
+    public static int BLASHSTRENGTH_MAX = 5;
+    public static float BOMB_PROB = 0.2f;
 
     public static boolean COLLAPSE_BOARD = true;
     public static int COLLAPSE_START = 500;
@@ -33,9 +43,6 @@ public class Types {
     public static int MAX_INACCESIBLE_TILES = 4;    //Number of inaccessible parts of the level allowed.
     public static int CORNER_DISTANCE = 20;          //Distance to the corner, in tiles, of the starting agent position.
     public static int BREATHING_SPACE = 2;          //Breathing space, L shaped tile section free at start around agent.
-
-
-    public static int DEFAULT_VISION_RANGE = BOARD_SIZE;    //-1 for full observability, >1 for PO.
 
 
     // Visualization variables (used to display game for humans to see).
@@ -65,6 +72,10 @@ public class Types {
 
 
     public static IGameConfig getGameConfig() {return gameConfig;}
+    
+    //Random instance.
+    private static Random random = new Random();
+    public static Random getRandom() { return random; }
 
     /**
      * Different TILETYPES allowed in the game.
