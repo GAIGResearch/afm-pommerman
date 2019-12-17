@@ -32,7 +32,7 @@ public class Test {
 
         MCTSParams mctsParams = new MCTSParams();
         mctsParams.stop_type = mctsParams.STOP_TIME;
-        mctsParams.heuristic_method = mctsParams.CUSTOM_HEURISTIC;
+        mctsParams.heuristic_method = mctsParams.ADVANCED_HEURISTIC;
 
         RHEAParams rheaParams = new RHEAParams();
         rheaParams.heurisic_type = Constants.CUSTOM_HEURISTIC;

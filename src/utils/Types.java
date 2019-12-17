@@ -27,12 +27,12 @@ public class Types {
     private static IGameConfig gameConfig = new OriginalGameConfig();
 
     //Board configuration constants.
-    public static int BOARD_SIZE = 11;              //Size of the board (n x n).
-    public static int BOARD_NUM_RIGID = 20;         //Number of rigid blocks to put in the level.
-    public static int BOARD_NUM_WOOD = 20;          //Number of wooden (destroyable) blocks for the level.
-    public static int BOARD_NUM_ITEMS = 10;         //Number of items to put in level.
+    public static int BOARD_SIZE = 50;//11;              //Size of the board (n x n).
+    public static int BOARD_NUM_RIGID = 500; //20         //Number of rigid blocks to put in the level.
+    public static int BOARD_NUM_WOOD = 500; //20;          //Number of wooden (destroyable) blocks for the level.
+    public static int BOARD_NUM_ITEMS = 90; //10;         //Number of items to put in level.
     public static int MAX_INACCESIBLE_TILES = 4;    //Number of inaccessible parts of the level allowed.
-    public static int CORNER_DISTANCE = 1;          //Distance to the corner, in tiles, of the starting agent position.
+    public static int CORNER_DISTANCE = 20;          //Distance to the corner, in tiles, of the starting agent position.
     public static int BREATHING_SPACE = 2;          //Breathing space, L shaped tile section free at start around agent.
 
     // Visualization variables (used to display game for humans to see).
