@@ -114,6 +114,8 @@ public class Run {
                     case 5:
                         MCTSParams mctsParams = new MCTSParams();
                         p = new MCTSPlayer(seed, playerID++, mctsParams);
+                        mctsParams.stop_type = mctsParams.STOP_TIME;
+                        mctsParams.heuristic_method = mctsParams.ADVANCED_HEURISTIC;
                         playerStr[i-4] = "MCTS";
                         break;
                     default:

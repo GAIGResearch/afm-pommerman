@@ -11,7 +11,7 @@ import java.util.Random;
 public class Types {
 
     // Game Configuration constants.
-    public static int MAX_GAME_TICKS = 800;         //Maximum duration of the game.
+    public static int MAX_GAME_TICKS = 100; //800         //Maximum duration of the game.
     public static int BOMB_LIFE = 10;               //Ticks until a bomb explodes.
     public static int FLAME_LIFE = 5;               //Ticks until a flame dissappears.
     public static int DEFAULT_BOMB_BLAST = 2;       //Default bombs create flames with this range.
@@ -21,11 +21,11 @@ public class Types {
     
     // Random bomb constants.
     public static int MIN_RANDOM_BOMBS = 1;
-    public static int MAX_RANDOM_BOMBS = 5;
+    public static int MAX_RANDOM_BOMBS = 10;
     public static int RANDOM_BOMB_ID = -1;
     public static int BLASTSTRENGTH_MIN = 1;
     public static int BLASHSTRENGTH_MAX = 5;
-    public static float BOMB_PROB = 0.2f;
+    public static float BOMB_PROB = 0.5f; //0.2f;
 
     public static boolean COLLAPSE_BOARD = true;
     public static int COLLAPSE_START = 500;
@@ -36,12 +36,12 @@ public class Types {
     private static IGameConfig gameConfig = new OriginalGameConfig();
 
     //Board configuration constants.
-    public static int BOARD_SIZE = 50;//11;              //Size of the board (n x n).
-    public static int BOARD_NUM_RIGID = 500; //20         //Number of rigid blocks to put in the level.
-    public static int BOARD_NUM_WOOD = 500; //20;          //Number of wooden (destroyable) blocks for the level.
-    public static int BOARD_NUM_ITEMS = 90; //10;         //Number of items to put in level.
+    public static int BOARD_SIZE = 20;//11;              //Size of the board (n x n).
+    public static int BOARD_NUM_RIGID = 50;//500; //20         //Number of rigid blocks to put in the level.
+    public static int BOARD_NUM_WOOD = 50; //500; //20;          //Number of wooden (destroyable) blocks for the level.
+    public static int BOARD_NUM_ITEMS = 30;//90; //10;         //Number of items to put in level.
     public static int MAX_INACCESIBLE_TILES = 4;    //Number of inaccessible parts of the level allowed.
-    public static int CORNER_DISTANCE = 20;          //Distance to the corner, in tiles, of the starting agent position.
+    public static int CORNER_DISTANCE = 4; //20;          //Distance to the corner, in tiles, of the starting agent position.
     public static int BREATHING_SPACE = 2;          //Breathing space, L shaped tile section free at start around agent.
 
 

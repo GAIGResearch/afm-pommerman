@@ -26,7 +26,7 @@ public class MCTSParams implements ParameterSet {
     // Parameters
     public double K = Math.sqrt(2);
     public int rollout_depth = 12;//10;
-    public int heuristic_method = ADVANCED_HEURISTIC;
+    public int heuristic_method = CUSTOM_HEURISTIC;
 
     // Budget settings
     public int stop_type = STOP_TIME;
@@ -34,7 +34,7 @@ public class MCTSParams implements ParameterSet {
     public int num_fmcalls = 2000;
     public int num_time = 40;
 
-    public int dist_threshold = -1;
+    public int dist_threshold = 5;
 
     @Override
     public void setParameterValue(String param, Object value) {
