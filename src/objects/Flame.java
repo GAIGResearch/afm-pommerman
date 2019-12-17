@@ -17,11 +17,6 @@ public class Flame extends GameObject {
     public void tick(){
         this.life--;
         desiredCoordinate = position.copy();
-        try {
-            Thread.sleep(1);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
     }
 
     @Override

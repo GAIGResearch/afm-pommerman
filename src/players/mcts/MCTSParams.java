@@ -34,7 +34,12 @@ public class MCTSParams implements ParameterSet {
     public int num_fmcalls = 2000;
     public int num_time = 40;
 
-    public int dist_threshold = 5;
+    public PommermanRules pRules;
+
+    public MCTSParams()
+    {
+        pRules = new PommermanRules();
+    }
 
     @Override
     public void setParameterValue(String param, Object value) {

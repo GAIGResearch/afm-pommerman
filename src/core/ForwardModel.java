@@ -4,6 +4,7 @@ import objects.Avatar;
 import objects.Bomb;
 import objects.Flame;
 import objects.GameObject;
+import players.mcts.PommermanRules;
 import utils.EventsStatistics;
 import utils.LevelGenerator;
 import utils.Types;
@@ -54,21 +55,8 @@ public class ForwardModel {
     private EventsStatistics es;
     private boolean[] isAgentStuck;
 
-    // Game rule flags
-    private boolean updateFlames = true;
-    private boolean updateBombs = true;
-    private boolean updatePositionSwap = true;
-    private boolean updatePositionOverlap = true;
-    private boolean updateMovingBombs = true;
-    private boolean lateUpdate = true;
-    private boolean updatePowerUps = true;
-    private boolean updateCollapse = true;
-    private boolean alwaysUpdateTrueModel = true;
-
-    // Rule update threshold
-    private int threshold = -1;
-
-
+    // Pommerman Rules from agent
+    private PommermanRules pRules;
 
     /**
      * Creates a forward model object.
@@ -297,10 +285,13 @@ public class ForwardModel {
 
         // 2. Tick the flames
         ArrayList<GameObject> deadFlames = new ArrayList<>();
-        if (updateFlames || trueModel && alwaysUpdateTrueModel) {
+        if (pRules.updateFlames || trueModel && pRules.alwaysUpdateTrueModel) {
             for (GameObject f : flames) {
-                if (threshold == -1 || f.getDistance() < threshold) {
+                if (pRules.threshold == -1 || f.getDistance() < pRules.threshold) {
                     f.tick();
+                    if(pRules.delayFlames)
+                        Types.sleep(pRules.delayMillis, pRules.delayNanos);
+
                     if (f.getLife() == 0) {  // Flame is dead, remove it from the list
                         deadFlames.add(f);
                     }
@@ -310,10 +301,12 @@ public class ForwardModel {
 
         // 3. Agents already have desired positions set from GameState call according to their chosen actions
         // 4. Tick bombs, they set their desired position in the tick() method as well as their life. They also
-        if (updateBombs || trueModel && alwaysUpdateTrueModel) {
+        if (pRules.updateBombs || trueModel && pRules.alwaysUpdateTrueModel) {
             for (GameObject b : bombs) {
-                if (threshold == -1 || b.getDistance() < threshold) {
+                if (pRules.threshold == -1 || b.getDistance() < pRules.threshold) {
                     b.tick();
+                    if(pRules.delayBombs)
+                        Types.sleep(pRules.delayMillis, pRules.delayNanos);
 
                     // Wrap around board size, don't let bombs outside of game area, check collisions with walls.
                     if (!setDesiredCoordinate(b, b.getDesiredCoordinate(), board))
@@ -350,30 +343,41 @@ public class ForwardModel {
         //      agent <-> agent. Bounce back both.
         //      bomb <-> bomb. Bounce back both.
         //      bomb <-> agent. Bomb only bounce back.
-        if (updatePositionSwap || trueModel && alwaysUpdateTrueModel) {
-            checkPositionSwap(aliveAgents, aliveAgents, board, false, threshold, VERBOSE_FM_DEBUG && trueModel);
-            checkPositionSwap(bombs, bombs, board, false,  threshold,VERBOSE_FM_DEBUG && trueModel);
-            checkPositionSwap(aliveAgents, bombs, board, true,  threshold,VERBOSE_FM_DEBUG && trueModel);
+        if (pRules.updatePositionSwap || trueModel && pRules.alwaysUpdateTrueModel) {
+            checkPositionSwap(aliveAgents, aliveAgents, board, false, pRules.threshold, VERBOSE_FM_DEBUG && trueModel);
+            checkPositionSwap(bombs, bombs, board, false,  pRules.threshold,VERBOSE_FM_DEBUG && trueModel);
+            checkPositionSwap(aliveAgents, bombs, board, true,  pRules.threshold,VERBOSE_FM_DEBUG && trueModel);
+
+            if(pRules.delayPositionSwap)
+                Types.sleep(pRules.delayMillis, pRules.delayNanos);
         }
 
         // 6. If >= 2 agents or >= 2 bombs on same space, bounce both back.
-        if (updatePositionOverlap || trueModel && alwaysUpdateTrueModel) {
-            checkPositionOverlap(aliveAgents, board, VERBOSE_FM_DEBUG && trueModel, threshold);
-            checkPositionOverlap(bombs, board, VERBOSE_FM_DEBUG && trueModel, threshold);
+        if (pRules.updatePositionOverlap || trueModel && pRules.alwaysUpdateTrueModel) {
+            checkPositionOverlap(aliveAgents, board, VERBOSE_FM_DEBUG && trueModel, pRules.threshold);
+            checkPositionOverlap(bombs, board, VERBOSE_FM_DEBUG && trueModel, pRules.threshold);
+
+            if(pRules.delayPositionOverlap)
+                Types.sleep(pRules.delayMillis, pRules.delayNanos);
         }
 
         // 7. Handle kicks & moving bombs hitting agents that can not kick
-        if (updateMovingBombs || trueModel && alwaysUpdateTrueModel) {
+        if (pRules.updateMovingBombs || trueModel && pRules.alwaysUpdateTrueModel) {
             handleMovingBombs();
+
+            if(pRules.delayMovingBombs)
+                Types.sleep(pRules.delayMillis, pRules.delayNanos);
         }
 
         // 8. Late update bomb overlaps. In previous loop it's possible that some bombs ended up overlapping.
-        if (lateUpdate || trueModel && alwaysUpdateTrueModel) {
-            checkPositionOverlap(bombs, board, VERBOSE_FM_DEBUG && trueModel, threshold);
+        if (pRules.lateUpdate || trueModel && pRules.alwaysUpdateTrueModel) {
+            checkPositionOverlap(bombs, board, VERBOSE_FM_DEBUG && trueModel, pRules.threshold);
+            if(pRules.lateUpdateDelay)
+                Types.sleep(pRules.delayMillis, pRules.delayNanos);
 
             // If bombs were bounced back, then they may overlap players again, bounce players back too if players moved.
             for (GameObject b : bombs) {
-                if (threshold == -1 || b.getDistance() < threshold) {
+                if (pRules.threshold == -1 || b.getDistance() < pRules.threshold) {
                     for (GameObject p : agents) {
                         if (p.getDesiredCoordinate() != null && p.getPosition() != null) {
                             if (!p.getDesiredCoordinate().equals(p.getPosition()) &&
@@ -393,7 +397,7 @@ public class ForwardModel {
         }
 
         // 9. Players pick up power-ups
-        if (updatePowerUps || trueModel && alwaysUpdateTrueModel) {
+        if (pRules.updatePowerUps || trueModel && pRules.alwaysUpdateTrueModel) {
             for (GameObject p : aliveAgents) {
                 if (p.getDesiredCoordinate() != null) {
                     int x = p.getDesiredCoordinate().x;
@@ -401,16 +405,18 @@ public class ForwardModel {
                     pickPowerUp((Avatar) p, x, y);
                 }
             }
+            if(pRules.delayPowerUps)
+                Types.sleep(pRules.delayMillis, pRules.delayNanos);
         }
 
         // 10. Explode bombs
         HashMap<Vector2d, Integer> flameOccupancy = new HashMap<>();
-        if (updateBombs || trueModel && alwaysUpdateTrueModel) { // TODO: different?
+        if (pRules.updateBombs || trueModel && pRules.alwaysUpdateTrueModel) { // TODO: different?
             flameOccupancy = handleBombExplosions();
         }
 
         // 11. Resolve flame on death effects
-        if (updateFlames || trueModel && alwaysUpdateTrueModel) { // TODO: different?
+        if (pRules.updateFlames || trueModel && pRules.alwaysUpdateTrueModel) { // TODO: different?
             for (GameObject f : deadFlames) {
                 if (f.getPosition() != null) {  // Flame had a physical presence, resolve on death effects
                     int x = f.getPosition().x;
@@ -433,7 +439,7 @@ public class ForwardModel {
         // Should contain a flame until all flames are dead.
         ArrayList<GameObject> deadAgentsThisTick = new ArrayList<>();
 
-        if (updateFlames || trueModel && alwaysUpdateTrueModel) {
+        if (pRules.updateFlames || trueModel && pRules.alwaysUpdateTrueModel) {
             for (GameObject f : flames) {
                 int x = f.getDesiredCoordinate().x;
                 int y = f.getDesiredCoordinate().y;
@@ -464,7 +470,7 @@ public class ForwardModel {
         }
 
         // 16. Collapse
-        if(Types.COLLAPSE_BOARD && (updateCollapse || trueModel && alwaysUpdateTrueModel)) {
+        if(Types.COLLAPSE_BOARD && (pRules.updateCollapse || trueModel && pRules.alwaysUpdateTrueModel)) {
             if (gsTick >= COLLAPSE_START && (gsTick - COLLAPSE_START) % COLLAPSE_STEP == 0) {
 
                 int collapse_stage = (gsTick - COLLAPSE_START) / COLLAPSE_STEP; // 0, 1, 2, ...
@@ -483,6 +489,9 @@ public class ForwardModel {
                     collapseTile(x, ring_min, collapsedAgents);
                     collapseTile(x, ring_max, collapsedAgents);
                 }
+
+                if(pRules.delayCollapse)
+                    Types.sleep(pRules.delayMillis, pRules.delayNanos);
 
                 // Kill agents.
                 if (collapsedAgents.size() > 0)
@@ -549,7 +558,7 @@ public class ForwardModel {
     private void handleMovingBombs()
     {
         for (GameObject b: bombs) {
-            if (threshold == -1 || b.getDistance() < threshold) {
+            if (pRules.threshold == -1 || b.getDistance() < pRules.threshold) {
                 for (GameObject p : aliveAgents) {
 
                     if (p.getDesiredCoordinate() != null && p.getPosition() != null) {
@@ -624,7 +633,7 @@ public class ForwardModel {
 
             ArrayList<GameObject> deadBombs = new ArrayList<>();
             for (GameObject b : bombs) {
-                if (threshold == -1 || b.getDistance() < threshold) {
+                if (pRules.threshold == -1 || b.getDistance() < pRules.threshold) {
 
                     // Force this bomb to explode if there is a flame at this position.
                     boolean forceExplosion = false;
@@ -658,6 +667,10 @@ public class ForwardModel {
 
                     // This bomb will explode and create new flames if life reached 0, or forced to explode
                     ArrayList<GameObject> newFlames = ((Bomb) b).explode(forceExplosion, board, powerups);
+
+                    if(pRules.delayExplosions)
+                        Types.sleep(pRules.delayMillis, pRules.delayNanos);
+
                     if (newFlames != null && newFlames.size() > 0) {
 
                         flames.addAll(newFlames);
@@ -1076,33 +1089,11 @@ public class ForwardModel {
     }
 
     /**
-     * Sets flags for the forward model rules.
-     * @param uF - update flames
-     * @param uB - update bombs
-     * @param uPS - update position swap
-     * @param uPO - update position overlap
-     * @param uMB - update moving bombs
-     * @param lU - late update positions
-     * @param uPU - update powerups
-     * @param uC - update collapsing
-     */
-    void setRules(boolean uF, boolean uB, boolean uPS, boolean uPO, boolean uMB, boolean lU, boolean uPU, boolean uC) {
-        updateFlames = uF;
-        updateBombs = uB;
-        updatePositionSwap = uPS;
-        updatePositionOverlap = uPO;
-        updateMovingBombs = uMB;
-        lateUpdate = lU;
-        updatePowerUps = uPU;
-        updateCollapse = uC;
-    }
-
-    /**
      * Sets threshold for object update, those beyond threshold are not updated, unless -1 (then all updated).
-     * @param threshold - int
+     * @param pRules - PommermanRules
      */
-    void setThreshold (int threshold) {
-        this.threshold = threshold;
+    void setPommermanRules (PommermanRules pRules) {
+        this.pRules = pRules.copy();
     }
 
     /**
@@ -1173,17 +1164,7 @@ public class ForwardModel {
      *                  May be -1, which means all object should be included in the copy (no reducing)
      */
     private void reduce(ForwardModel copy, int playerIdx) {
-        copy.updateFlames = updateFlames;
-        copy.updateBombs = updateBombs;
-        copy.updatePositionSwap = updatePositionSwap;
-        copy.updatePositionOverlap = updatePositionOverlap;
-        copy.updateMovingBombs = updateMovingBombs;
-        copy.lateUpdate = lateUpdate;
-        copy.updatePowerUps = updatePowerUps;
-        copy.updateCollapse = updateCollapse;
-        copy.alwaysUpdateTrueModel = alwaysUpdateTrueModel;
-        copy.threshold = threshold;
-
+        copy.pRules = pRules.copy();
         Vector2d avatarPosition = null;
         int range = -1;
 

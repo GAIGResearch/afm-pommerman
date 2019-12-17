@@ -18,14 +18,14 @@ public class Types {
     public static int DEFAULT_BOMB_AMMO = 1;        //Default number of simultaneous bombs an agent can put.
     public static boolean DEFAULT_BOMB_KICK = false;//Can agents kick bomb by default?
     public static int DEFAULT_VISION_RANGE = -1;    //-1 for full observability, >1 for PO.
-    
+
     // Random bomb constants.
     public static int MIN_RANDOM_BOMBS = 1;
     public static int MAX_RANDOM_BOMBS = 10;
     public static int RANDOM_BOMB_ID = -1;
     public static int BLASTSTRENGTH_MIN = 1;
     public static int BLASHSTRENGTH_MAX = 5;
-    public static float BOMB_PROB = 0.5f; //0.2f;
+    public static float BOMB_PROB = 0.0f; //0.2f;
 
     public static boolean COLLAPSE_BOARD = true;
     public static int COLLAPSE_START = 500;
@@ -36,12 +36,12 @@ public class Types {
     private static IGameConfig gameConfig = new OriginalGameConfig();
 
     //Board configuration constants.
-    public static int BOARD_SIZE = 20;//11;              //Size of the board (n x n).
-    public static int BOARD_NUM_RIGID = 50;//500; //20         //Number of rigid blocks to put in the level.
-    public static int BOARD_NUM_WOOD = 50; //500; //20;          //Number of wooden (destroyable) blocks for the level.
-    public static int BOARD_NUM_ITEMS = 30;//90; //10;         //Number of items to put in level.
+    public static int BOARD_SIZE = 11;              //Size of the board (n x n).
+    public static int BOARD_NUM_RIGID = 20;         //Number of rigid blocks to put in the level.
+    public static int BOARD_NUM_WOOD = 20;          //Number of wooden (destroyable) blocks for the level.
+    public static int BOARD_NUM_ITEMS = 10;         //Number of items to put in level.
     public static int MAX_INACCESIBLE_TILES = 4;    //Number of inaccessible parts of the level allowed.
-    public static int CORNER_DISTANCE = 4; //20;          //Distance to the corner, in tiles, of the starting agent position.
+    public static int CORNER_DISTANCE = 1;          //Distance to the corner, in tiles, of the starting agent position.
     public static int BREATHING_SPACE = 2;          //Breathing space, L shaped tile section free at start around agent.
 
 
@@ -70,6 +70,15 @@ public class Types {
     public static boolean CHECK_DECISION_TIME = true;
     public static int DECISION_TIME_LIMIT = 100; // ms to decide an action
 
+    //Sleep function
+    public static void sleep(long millis, int nanos)
+    {
+        try {
+            Thread.sleep(millis, nanos);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
 
     public static IGameConfig getGameConfig() {return gameConfig;}
     
