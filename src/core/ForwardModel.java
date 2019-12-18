@@ -56,7 +56,7 @@ public class ForwardModel {
     private boolean[] isAgentStuck;
 
     // Pommerman Rules from agent
-    private PommermanRules pRules;
+    private PommermanRules pRules = new PommermanRules();
 
     /**
      * Creates a forward model object.
@@ -289,7 +289,7 @@ public class ForwardModel {
             for (GameObject f : flames) {
                 if (pRules.threshold == -1 || f.getDistance() < pRules.threshold) {
                     f.tick();
-                    if(pRules.delayFlames)
+                    if(pRules.delayFlames && !trueModel)
                         Types.sleep(pRules.delayMillis, pRules.delayNanos);
 
                     if (f.getLife() == 0) {  // Flame is dead, remove it from the list
@@ -305,7 +305,7 @@ public class ForwardModel {
             for (GameObject b : bombs) {
                 if (pRules.threshold == -1 || b.getDistance() < pRules.threshold) {
                     b.tick();
-                    if(pRules.delayBombs)
+                    if(pRules.delayBombs && !trueModel)
                         Types.sleep(pRules.delayMillis, pRules.delayNanos);
 
                     // Wrap around board size, don't let bombs outside of game area, check collisions with walls.
@@ -344,36 +344,25 @@ public class ForwardModel {
         //      bomb <-> bomb. Bounce back both.
         //      bomb <-> agent. Bomb only bounce back.
         if (pRules.updatePositionSwap || trueModel && pRules.alwaysUpdateTrueModel) {
-            checkPositionSwap(aliveAgents, aliveAgents, board, false, pRules.threshold, VERBOSE_FM_DEBUG && trueModel);
-            checkPositionSwap(bombs, bombs, board, false,  pRules.threshold,VERBOSE_FM_DEBUG && trueModel);
-            checkPositionSwap(aliveAgents, bombs, board, true,  pRules.threshold,VERBOSE_FM_DEBUG && trueModel);
-
-            if(pRules.delayPositionSwap)
-                Types.sleep(pRules.delayMillis, pRules.delayNanos);
+            checkPositionSwap(aliveAgents, aliveAgents, board, false, pRules, VERBOSE_FM_DEBUG && trueModel, trueModel);
+            checkPositionSwap(bombs, bombs, board, false,  pRules,VERBOSE_FM_DEBUG && trueModel, trueModel);
+            checkPositionSwap(aliveAgents, bombs, board, true,  pRules,VERBOSE_FM_DEBUG && trueModel, trueModel);
         }
 
         // 6. If >= 2 agents or >= 2 bombs on same space, bounce both back.
         if (pRules.updatePositionOverlap || trueModel && pRules.alwaysUpdateTrueModel) {
-            checkPositionOverlap(aliveAgents, board, VERBOSE_FM_DEBUG && trueModel, pRules.threshold);
-            checkPositionOverlap(bombs, board, VERBOSE_FM_DEBUG && trueModel, pRules.threshold);
-
-            if(pRules.delayPositionOverlap)
-                Types.sleep(pRules.delayMillis, pRules.delayNanos);
+            checkPositionOverlap(aliveAgents, board, VERBOSE_FM_DEBUG && trueModel, trueModel, pRules);
+            checkPositionOverlap(bombs, board, VERBOSE_FM_DEBUG && trueModel, trueModel, pRules);
         }
 
         // 7. Handle kicks & moving bombs hitting agents that can not kick
         if (pRules.updateMovingBombs || trueModel && pRules.alwaysUpdateTrueModel) {
-            handleMovingBombs();
-
-            if(pRules.delayMovingBombs)
-                Types.sleep(pRules.delayMillis, pRules.delayNanos);
+            handleMovingBombs(pRules);
         }
 
         // 8. Late update bomb overlaps. In previous loop it's possible that some bombs ended up overlapping.
-        if (pRules.lateUpdate || trueModel && pRules.alwaysUpdateTrueModel) {
-            checkPositionOverlap(bombs, board, VERBOSE_FM_DEBUG && trueModel, pRules.threshold);
-            if(pRules.lateUpdateDelay)
-                Types.sleep(pRules.delayMillis, pRules.delayNanos);
+        if (pRules.updatePositionOverlap || trueModel && pRules.alwaysUpdateTrueModel) {
+            checkPositionOverlap(bombs, board, VERBOSE_FM_DEBUG && trueModel, trueModel, pRules);
 
             // If bombs were bounced back, then they may overlap players again, bounce players back too if players moved.
             for (GameObject b : bombs) {
@@ -405,13 +394,11 @@ public class ForwardModel {
                     pickPowerUp((Avatar) p, x, y);
                 }
             }
-            if(pRules.delayPowerUps)
-                Types.sleep(pRules.delayMillis, pRules.delayNanos);
         }
 
         // 10. Explode bombs
         HashMap<Vector2d, Integer> flameOccupancy = new HashMap<>();
-        if (pRules.updateBombs || trueModel && pRules.alwaysUpdateTrueModel) { // TODO: different?
+        if (pRules.updateExplosions || trueModel && pRules.alwaysUpdateTrueModel) { // TODO: different?
             flameOccupancy = handleBombExplosions();
         }
 
@@ -441,11 +428,17 @@ public class ForwardModel {
 
         if (pRules.updateFlames || trueModel && pRules.alwaysUpdateTrueModel) {
             for (GameObject f : flames) {
-                int x = f.getDesiredCoordinate().x;
-                int y = f.getDesiredCoordinate().y;
-                if (board[y][x] != Types.TILETYPE.FLAMES) {
-                    f.setPosition(f.getDesiredCoordinate());
-                    board[y][x] = f.getType();
+                if (pRules.threshold == -1 || f.getDistance() < pRules.threshold) {
+                    int x = f.getDesiredCoordinate().x;
+                    int y = f.getDesiredCoordinate().y;
+                    if (board[y][x] != Types.TILETYPE.FLAMES) {
+                        f.setPosition(f.getDesiredCoordinate());
+                        board[y][x] = f.getType();
+                    }
+
+                    if(pRules.delayFlames && !trueModel)
+                        Types.sleep(pRules.delayMillis, pRules.delayNanos);
+
                 }
             }
         }
@@ -489,9 +482,6 @@ public class ForwardModel {
                     collapseTile(x, ring_min, collapsedAgents);
                     collapseTile(x, ring_max, collapsedAgents);
                 }
-
-                if(pRules.delayCollapse)
-                    Types.sleep(pRules.delayMillis, pRules.delayNanos);
 
                 // Kill agents.
                 if (collapsedAgents.size() > 0)
@@ -555,7 +545,7 @@ public class ForwardModel {
     /**
      * Handles the movement of bombs, including kicking them if the agent can do so.
      */
-    private void handleMovingBombs()
+    private void handleMovingBombs(PommermanRules pRules)
     {
         for (GameObject b: bombs) {
             if (pRules.threshold == -1 || b.getDistance() < pRules.threshold) {
@@ -612,6 +602,9 @@ public class ForwardModel {
                         }
                     }
                 }
+
+                if(pRules.delayMovingBombs && !trueModel)
+                    Types.sleep(pRules.delayMillis, pRules.delayNanos);
             }
         }
     }
@@ -668,7 +661,7 @@ public class ForwardModel {
                     // This bomb will explode and create new flames if life reached 0, or forced to explode
                     ArrayList<GameObject> newFlames = ((Bomb) b).explode(forceExplosion, board, powerups);
 
-                    if(pRules.delayExplosions)
+                    if(pRules.delayExplosions && !trueModel)
                         Types.sleep(pRules.delayMillis, pRules.delayNanos);
 
                     if (newFlames != null && newFlames.size() > 0) {

@@ -17,10 +17,9 @@ public class Test {
         // Game parameters
         long seed = System.currentTimeMillis();
         int boardSize = Types.BOARD_SIZE;
-        Types.GAME_MODE gameMode = Types.GAME_MODE.FFA;
         boolean useSeparateThreads = false;
 
-        Game game = new Game(seed, boardSize, Types.GAME_MODE.FFA, "");
+        Game game = new Game(seed, boardSize, Types.GAME_MODE.TEAM, "");
 
         // Key controllers for human player s (up to 2 so far).
         KeyController ki1 = new KeyController(true);
@@ -33,19 +32,28 @@ public class Test {
         MCTSParams mctsParams = new MCTSParams();
         mctsParams.stop_type = mctsParams.STOP_TIME;
         mctsParams.heuristic_method = mctsParams.CUSTOM_HEURISTIC;
+        mctsParams.pRules.threshold = -1;
+
+        MCTSParams mctsParams2 = new MCTSParams();
+        mctsParams2.stop_type = mctsParams.STOP_TIME;
+        mctsParams2.heuristic_method = mctsParams.CUSTOM_HEURISTIC;
+        mctsParams2.pRules.threshold = 3;
 
 
         RHEAParams rheaParams = new RHEAParams();
         rheaParams.heurisic_type = Constants.CUSTOM_HEURISTIC;
 
         players.add(new MCTSPlayer(seed, playerID++, mctsParams));
-        //players.add(new MCTSPlayer(seed, playerID++, mctsParams));
+        players.add(new MCTSPlayer(seed, playerID++, mctsParams2));
+
+//        players.add(new SimplePlayer(seed, playerID++));
+//        players.add(new RHEAPlayer(seed, playerID++, rheaParams));
+//        players.add(new SimplePlayer(seed, playerID++));
+
+        players.add(new MCTSPlayer(seed, playerID++, mctsParams));
+        players.add(new MCTSPlayer(seed, playerID++, mctsParams2));
 
         players.add(new SimplePlayer(seed, playerID++));
-//        players.add(new RHEAPlayer(seed, playerID++, rheaParams));
-        players.add(new SimplePlayer(seed, playerID++));
-        players.add(new SimplePlayer(seed, playerID++));
-//        players.add(new MCTSPlayer(seed, playerID++, new MCTSParams()));
 //        players.add(new RHEAPlayer(seed, playerID++, rheaParams));
 
         // Make sure we have exactly NUM_PLAYERS players

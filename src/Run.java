@@ -33,7 +33,7 @@ public class Run {
 
         //default
         if(args.length == 0)
-            args = new String[]{"0", "1", "10", "-1", "3", "5", "3", "5"};
+            args = new String[]{"1", "-1", "10", "-1", "5", "6", "5", "6"};
 
         if(args.length != 8) {
             printHelp();
@@ -113,10 +113,19 @@ public class Run {
                         break;
                     case 5:
                         MCTSParams mctsParams = new MCTSParams();
-                        p = new MCTSPlayer(seed, playerID++, mctsParams);
                         mctsParams.stop_type = mctsParams.STOP_TIME;
-                        mctsParams.heuristic_method = mctsParams.ADVANCED_HEURISTIC;
-                        playerStr[i-4] = "MCTS";
+                        mctsParams.heuristic_method = mctsParams.CUSTOM_HEURISTIC;
+                        mctsParams.pRules.threshold = -1;
+                        p = new MCTSPlayer(seed, playerID++, mctsParams);
+                        playerStr[i-4] = "MCTS (" + mctsParams.pRules.threshold + ")";
+                        break;
+                    case 6:
+                        MCTSParams mctsParams2 = new MCTSParams();
+                        mctsParams2.stop_type = mctsParams2.STOP_TIME;
+                        mctsParams2.heuristic_method = mctsParams2.CUSTOM_HEURISTIC;
+                        mctsParams2.pRules.threshold = 3;
+                        p = new MCTSPlayer(seed, playerID++, mctsParams2);
+                        playerStr[i-4] = "MCTS (" + mctsParams2.pRules.threshold + ")";
                         break;
                     default:
                         System.out.println("WARNING: Invalid agent ID: " + agentType );

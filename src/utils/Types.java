@@ -11,7 +11,7 @@ import java.util.Random;
 public class Types {
 
     // Game Configuration constants.
-    public static int MAX_GAME_TICKS = 100; //800         //Maximum duration of the game.
+    public static int MAX_GAME_TICKS = 800; //800         //Maximum duration of the game.
     public static int BOMB_LIFE = 10;               //Ticks until a bomb explodes.
     public static int FLAME_LIFE = 5;               //Ticks until a flame dissappears.
     public static int DEFAULT_BOMB_BLAST = 2;       //Default bombs create flames with this range.
@@ -73,11 +73,25 @@ public class Types {
     //Sleep function
     public static void sleep(long millis, int nanos)
     {
-        try {
-            Thread.sleep(millis, nanos);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+//        try {
+//            Thread.sleep(millis, nanos);
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
+
+        ElapsedCpuTimer ect = new ElapsedCpuTimer();
+        ect.setMaxTimeNanos(millis * 1000000 + nanos * 1000);
+//        System.out.println(ect.remainingTimeNanos());
+        long remaining = ect.remainingTimeNanos();
+//        long starting = remaining;
+        while(remaining > 0)
+        {
+            remaining = ect.remainingTimeNanos();
+//            System.out.println(ect.remainingTimeNanos());
         }
+
+//        int a = 0;
+
     }
 
     public static IGameConfig getGameConfig() {return gameConfig;}

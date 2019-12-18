@@ -37,9 +37,6 @@ public class ElapsedCpuTimer {
         return getTime() - oldTime;
     }
 
-    public long elapsedNanos() {
-        return elapsed();
-    }
 
     public long elapsedMillis() {
         return (long) (elapsed() / 1000000.0);
@@ -86,6 +83,15 @@ public class ElapsedCpuTimer {
     public void setMaxTimeMillis(long time) {
         maxTime = time * 1000000;
 
+    }
+
+    public void setMaxTimeNanos(long time) {
+        maxTime = time;
+    }
+
+    public long remainingTimeNanos()
+    {
+        return maxTime - elapsed();
     }
 
     public long remainingTimeMillis()

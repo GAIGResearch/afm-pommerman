@@ -69,7 +69,7 @@ public class SingleTreeNode
 
         double avgTimeTaken;
         double acumTimeTaken = 0;
-        long remaining;
+        long remaining=10000;
         int numIters = 0;
 
         int remainingLimit = 5;
@@ -100,6 +100,7 @@ public class SingleTreeNode
             }
         }
 //        System.out.println(" ITERS " + numIters);
+//        System.out.println(remaining);
         return numIters;
     }
 

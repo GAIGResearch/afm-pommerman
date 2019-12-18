@@ -102,6 +102,12 @@ public class MCTSPlayer extends ParameterizedPlayer {
 //            }
 //        }
 
+
+        if(gs.getTick()>0 && gs.getTick() % 50 == 0)
+        {
+//            System.out.println(this.playerID + " " + gs.getTick() + " " + ss.mean());
+        }
+
         //... and return it.
         return actions[action];
     }
@@ -121,6 +127,6 @@ public class MCTSPlayer extends ParameterizedPlayer {
 
     public void result(double reward)
     {
-        System.out.println(ss.mean());
+        System.out.println("[end] " + this.playerID + " " + ss.mean());
     }
 }
